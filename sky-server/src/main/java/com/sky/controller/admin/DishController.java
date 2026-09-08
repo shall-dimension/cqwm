@@ -109,4 +109,20 @@ public class DishController {
         return Result.success();
     }
 
+    /**
+     * 菜品启停售
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    @ApiOperation("菜品启停售")
+    public Result<String> enableOrDisable(@PathVariable Integer status, Long id) {
+        log.info("菜品启停售：status={}, id={}", status, id);
+
+        dishService.enableOrDisable(status, id);
+
+        return Result.success();
+    }
+
 }

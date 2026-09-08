@@ -18,11 +18,14 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 菜品业务层
@@ -31,12 +34,16 @@ import java.util.List;
 @Slf4j
 public class DishServiceImpl implements DishService {
 
+    public static final String DISH_CACHE_KEY = "dish_category_";
+
     @Autowired
     private DishMapper dishMapper;
     @Autowired
     private DishFlavorMapper dishFlavorMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品和口味
@@ -57,6 +64,9 @@ public class DishServiceImpl implements DishService {
             flavors.forEach(flavor -> flavor.setDishId(dishId));
             dishFlavorMapper.insertBatch(flavors);
         }
+
+        //3、清理缓存
+        cleanCache(DISH_CACHE_KEY + dishDTO.getCategoryId());
     }
 
     /**
@@ -98,6 +108,9 @@ public class DishServiceImpl implements DishService {
             // 4. 删除口味
             dishFlavorMapper.deleteByDishId(id);
         }
+
+        // 清理全部缓存
+        cleanCache(DISH_CACHE_KEY + "*");
     }
 
     /**
@@ -141,6 +154,9 @@ public class DishServiceImpl implements DishService {
             flavors.forEach(flavor -> flavor.setDishId(dishDTO.getId()));
             dishFlavorMapper.insertBatch(flavors);
         }
+
+        // 4、清理全部缓存
+        cleanCache(DISH_CACHE_KEY + "*");
     }
 
     /**
@@ -149,10 +165,18 @@ public class DishServiceImpl implements DishService {
      * @return
      */
     public List<DishVO> listWithFlavor(Dish dish) {
+        // 1、先查缓存
+        String key = DISH_CACHE_KEY + dish.getCategoryId();
+        List<DishVO> dishVOList = (List<DishVO>) redisTemplate.opsForValue().get(key);
+        if (dishVOList != null) {
+            log.info("命中缓存：{}", key);
+            return dishVOList;
+        }
+
+        // 2、缓存未命中，查库
         List<Dish> dishList = dishMapper.list(dish);
 
-        List<DishVO> dishVOList = new ArrayList<>();
-
+        dishVOList = new ArrayList<>();
         for (Dish d : dishList) {
             DishVO dishVO = new DishVO();
             BeanUtils.copyProperties(d, dishVO);
@@ -162,6 +186,38 @@ public class DishServiceImpl implements DishService {
             dishVOList.add(dishVO);
         }
 
+        // 3、存入缓存
+        redisTemplate.opsForValue().set(key, dishVOList, 60, TimeUnit.MINUTES);
+        log.info("缓存已写入：{}", key);
+
         return dishVOList;
+    }
+
+    /**
+     * 菜品启停售
+     * @param status
+     * @param id
+     */
+    public void enableOrDisable(Integer status, Long id) {
+        Dish dish = Dish.builder()
+                .id(id)
+                .status(status)
+                .build();
+        dishMapper.update(dish);
+
+        // 清理全部缓存
+        cleanCache(DISH_CACHE_KEY + "*");
+    }
+
+    /**
+     * 清理缓存
+     * @param pattern
+     */
+    private void cleanCache(String pattern) {
+        Set keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.info("清理缓存：{}", keys);
+        }
     }
 }
