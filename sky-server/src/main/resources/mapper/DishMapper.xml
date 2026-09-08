@@ -30,6 +30,21 @@
         delete from dish where id = #{id}
     </delete>
 
+    <select id="list" parameterType="Dish" resultType="Dish">
+        select * from dish
+        <where>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+
     <update id="update">
         update dish
         <set>
