@@ -1,18 +1,26 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.AddressBook;
 import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.ShoppingCart;
+import com.sky.entity.User;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.AddressBookMapper;
 import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
+import com.sky.mapper.UserMapper;
+import com.sky.properties.PaymentProperties;
 import com.sky.service.OrderService;
+import com.sky.utils.WeChatPayUtil;
+import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -37,6 +45,12 @@ public class OrderServiceImpl implements OrderService {
     private ShoppingCartMapper shoppingCartMapper;
     @Autowired
     private AddressBookMapper addressBookMapper;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private PaymentProperties paymentProperties;
 
     /**
      * 用户下单
@@ -93,6 +107,90 @@ public class OrderServiceImpl implements OrderService {
                 .orderAmount(orders.getAmount())
                 .orderTime(orders.getOrderTime())
                 .build();
+    }
+
+    /**
+     * 订单支付
+     *
+     * @param ordersPaymentDTO 支付信息
+     * @return 支付参数
+     */
+    @Override
+    @Transactional
+    public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+        Long userId = BaseContext.getCurrentId();
+        Orders orders = orderMapper.getByNumber(ordersPaymentDTO.getOrderNumber());
+
+        // 支付接口只能操作当前用户自己的待付款订单
+        if (orders == null || !Objects.equals(orders.getUserId(), userId)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (Objects.equals(orders.getPayStatus(), Orders.PAID)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_ALREADY_PAID);
+        }
+        if (!Objects.equals(orders.getStatus(), Orders.PENDING_PAYMENT)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 模拟支付不调用微信接口，直接推进订单状态
+        if (paymentProperties.isMock()) {
+            updateOrderPaid(orders, ordersPaymentDTO.getPayMethod());
+            return OrderPaymentVO.builder()
+                    .mock(true)
+                    .build();
+        }
+
+        User user = userMapper.getById(userId);
+        JSONObject jsonObject = weChatPayUtil.pay(
+                orders.getNumber(),
+                orders.getAmount(),
+                "苍穹外卖订单",
+                user.getOpenid()
+        );
+
+        if ("ORDERPAID".equals(jsonObject.getString("code"))) {
+            throw new OrderBusinessException(MessageConstant.ORDER_ALREADY_PAID);
+        }
+
+        OrderPaymentVO orderPaymentVO = JSON.toJavaObject(jsonObject, OrderPaymentVO.class);
+        orderPaymentVO.setPackageStr(jsonObject.getString("package"));
+        orderPaymentVO.setMock(false);
+        return orderPaymentVO;
+    }
+
+    /**
+     * 支付成功后修改订单状态
+     *
+     * @param orderNumber 订单号
+     */
+    @Override
+    @Transactional
+    public void paySuccess(String orderNumber) {
+        Orders orders = orderMapper.getByNumber(orderNumber);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (Objects.equals(orders.getPayStatus(), Orders.PAID)) {
+            return;
+        }
+        updateOrderPaid(orders, orders.getPayMethod());
+    }
+
+    /**
+     * 将订单更新为已支付、待接单
+     *
+     * @param orders 订单信息
+     * @param payMethod 支付方式
+     */
+    private void updateOrderPaid(Orders orders, Integer payMethod) {
+        Orders paidOrder = Orders.builder()
+                .id(orders.getId())
+                .status(Orders.TO_BE_CONFIRMED)
+                .payStatus(Orders.PAID)
+                .payMethod(payMethod)
+                .checkoutTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(paidOrder);
     }
 
     /**

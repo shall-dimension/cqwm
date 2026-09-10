@@ -35,6 +35,9 @@ logging:
         controller: info
 
 sky:
+  payment:
+    # mock 模拟支付，wechat 微信支付
+    mode: mock
   wechat:
     appid: ${sky.wechat.appid}
     secret: ${sky.wechat.secret}
