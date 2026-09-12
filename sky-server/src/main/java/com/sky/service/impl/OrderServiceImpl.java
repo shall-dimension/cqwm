@@ -252,6 +252,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 将派送中订单更新为已完成
+     *
+     * @param orderId 订单id
+     */
+    @Override
+    @Transactional
+    public void complete(Long orderId) {
+        Orders orders = orderMapper.getById(orderId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(orders.getStatus(), Orders.DELIVERY_IN_PROGRESS)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders completedOrder = Orders.builder()
+                .id(orderId)
+                .status(Orders.COMPLETED)
+                .deliveryTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(completedOrder);
+    }
+
+    /**
      * 取消当前用户的订单
      *
      * @param orderId 订单id

@@ -82,6 +82,13 @@ public interface OrderService {
     void delivery(Long orderId);
 
     /**
+     * 将派送中订单更新为已完成
+     *
+     * @param orderId 订单id
+     */
+    void complete(Long orderId);
+
+    /**
      * 取消当前用户的订单
      *
      * @param orderId 订单id
