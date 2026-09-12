@@ -47,7 +47,7 @@ public class OrderController {
     @ApiOperation("历史订单查询")
     public Result<PageResult> historyOrders(OrdersPageQueryDTO ordersPageQueryDTO) {
         Integer status = ordersPageQueryDTO.getStatus();
-        if (status != null && (status < Orders.PENDING_PAYMENT || status > Orders.REFUNDED)) {
+        if (status != null && (status < Orders.PENDING_PAYMENT || status > Orders.CANCELLED)) {
             return Result.error(MessageConstant.ORDER_STATUS_ERROR);
         }
 
@@ -132,5 +132,19 @@ public class OrderController {
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成支付参数：{}", orderPaymentVO);
         return Result.success(orderPaymentVO);
+    }
+
+    /**
+     * 当前用户催单
+     *
+     * @param id 订单id
+     * @return 操作结果
+     */
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("客户催单")
+    public Result<String> reminder(@PathVariable Long id) {
+        log.info("客户催单：{}", id);
+        orderService.reminder(id);
+        return Result.success();
     }
 }

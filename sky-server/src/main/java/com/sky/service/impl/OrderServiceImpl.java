@@ -31,6 +31,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,12 +40,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+
+    private static final Integer NEW_ORDER_MESSAGE_TYPE = 1;
+    private static final Integer ORDER_REMINDER_MESSAGE_TYPE = 2;
 
     @Autowired
     private OrderMapper orderMapper;
@@ -60,6 +66,8 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private PaymentProperties paymentProperties;
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     /**
      * 分页查询当前用户的历史订单
@@ -334,7 +342,6 @@ public class OrderServiceImpl implements OrderService {
             shoppingCartList.add(shoppingCart);
         }
 
-        shoppingCartMapper.deleteByUserId(userId);
         shoppingCartMapper.insertBatch(shoppingCartList);
     }
 
@@ -476,7 +483,30 @@ public class OrderServiceImpl implements OrderService {
                 .payMethod(payMethod)
                 .checkoutTime(LocalDateTime.now())
                 .build();
-        orderMapper.update(paidOrder);
+        int updatedRows = orderMapper.updateStatusIfCurrent(paidOrder, Orders.PENDING_PAYMENT);
+        if (updatedRows == 0) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        sendOrderMessage(NEW_ORDER_MESSAGE_TYPE, orders);
+    }
+
+    /**
+     * 当前用户催单
+     *
+     * @param orderId 订单id
+     */
+    @Override
+    public void reminder(Long orderId) {
+        Long userId = BaseContext.getCurrentId();
+        Orders orders = orderMapper.getByIdAndUserId(orderId, userId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!isReminderAllowed(orders.getStatus())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        sendOrderMessage(ORDER_REMINDER_MESSAGE_TYPE, orders);
     }
 
     /**
@@ -505,6 +535,29 @@ public class OrderServiceImpl implements OrderService {
                 || Objects.equals(status, Orders.CONFIRMED)
                 || Objects.equals(status, Orders.DELIVERY_IN_PROGRESS)
                 || Objects.equals(status, Orders.COMPLETED);
+    }
+
+    /**
+     * 判断订单当前状态是否允许催单
+     */
+    private boolean isReminderAllowed(Integer status) {
+        return Objects.equals(status, Orders.TO_BE_CONFIRMED)
+                || Objects.equals(status, Orders.CONFIRMED)
+                || Objects.equals(status, Orders.DELIVERY_IN_PROGRESS);
+    }
+
+    /**
+     * 通过WebSocket向所有管理端推送订单消息
+     *
+     * @param type 消息类型，1为来单提醒，2为客户催单
+     * @param orders 订单信息
+     */
+    private void sendOrderMessage(Integer type, Orders orders) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", type);
+        message.put("orderId", orders.getId());
+        message.put("content", "订单号：" + orders.getNumber());
+        webSocketServer.sendToAllClient(JSON.toJSONString(message));
     }
 
     /**

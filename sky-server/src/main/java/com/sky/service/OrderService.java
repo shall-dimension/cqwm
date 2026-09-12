@@ -124,4 +124,11 @@ public interface OrderService {
      * @param orderNumber 订单号
      */
     void paySuccess(String orderNumber);
+
+    /**
+     * 当前用户催单
+     *
+     * @param orderId 订单id
+     */
+    void reminder(Long orderId);
 }

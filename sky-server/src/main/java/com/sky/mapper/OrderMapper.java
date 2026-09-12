@@ -8,6 +8,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Mapper
 public interface OrderMapper {
 
@@ -73,4 +76,25 @@ public interface OrderMapper {
      * @param orders 订单信息
      */
     void update(Orders orders);
+
+    /**
+     * 根据订单状态和下单时间查询订单
+     *
+     * @param status 订单状态
+     * @param orderTime 下单时间上限
+     * @return 订单列表
+     */
+    @Select("select * from orders where status = #{status} and order_time < #{orderTime}")
+    List<Orders> getByStatusAndOrderTimeLT(@Param("status") Integer status,
+                                          @Param("orderTime") LocalDateTime orderTime);
+
+    /**
+     * 在订单仍处于预期状态时更新状态及相关字段
+     *
+     * @param orders 待更新的订单信息
+     * @param expectedStatus 预期原状态
+     * @return 受影响行数
+     */
+    int updateStatusIfCurrent(@Param("orders") Orders orders,
+                              @Param("expectedStatus") Integer expectedStatus);
 }

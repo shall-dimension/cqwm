@@ -45,7 +45,7 @@ public class OrderController {
     @ApiOperation("订单搜索")
     public Result<PageResult> conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
         Integer status = ordersPageQueryDTO.getStatus();
-        if (status != null && (status < Orders.PENDING_PAYMENT || status > Orders.REFUNDED)) {
+        if (status != null && (status < Orders.PENDING_PAYMENT || status > Orders.CANCELLED)) {
             return Result.error(MessageConstant.ORDER_STATUS_ERROR);
         }
         if (ordersPageQueryDTO.getBeginTime() != null
