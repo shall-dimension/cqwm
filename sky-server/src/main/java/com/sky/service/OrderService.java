@@ -75,6 +75,13 @@ public interface OrderService {
     void cancel(OrdersCancelDTO ordersCancelDTO) throws Exception;
 
     /**
+     * 将待派送订单更新为派送中
+     *
+     * @param orderId 订单id
+     */
+    void delivery(Long orderId);
+
+    /**
      * 取消当前用户的订单
      *
      * @param orderId 订单id
