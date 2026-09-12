@@ -6,6 +6,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersSubmitDTO;
@@ -133,6 +134,30 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return buildOrderVO(orders);
+    }
+
+    /**
+     * 接单
+     *
+     * @param ordersConfirmDTO 接单参数
+     */
+    @Override
+    @Transactional
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        Long orderId = ordersConfirmDTO.getId();
+        Orders orders = orderMapper.getById(orderId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(orders.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders confirmedOrder = Orders.builder()
+                .id(orderId)
+                .status(Orders.CONFIRMED)
+                .build();
+        orderMapper.update(confirmedOrder);
     }
 
     /**
