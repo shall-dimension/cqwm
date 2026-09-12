@@ -19,6 +19,14 @@ public interface OrderService {
     PageResult pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
 
     /**
+     * 管理端根据条件分页搜索订单
+     *
+     * @param ordersPageQueryDTO 订单查询条件
+     * @return 订单分页结果
+     */
+    PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
      * 查询当前用户的订单详情
      *
      * @param orderId 订单id
