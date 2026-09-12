@@ -27,6 +27,13 @@ public interface OrderService {
     OrderVO getOrderDetail(Long orderId);
 
     /**
+     * 取消当前用户的订单
+     *
+     * @param orderId 订单id
+     */
+    void cancelById(Long orderId) throws Exception;
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息

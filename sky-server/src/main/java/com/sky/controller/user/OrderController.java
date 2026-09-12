@@ -79,6 +79,20 @@ public class OrderController {
     }
 
     /**
+     * 取消当前用户的订单
+     *
+     * @param id 订单id
+     * @return 操作结果
+     */
+    @PutMapping("/cancel/{id}")
+    @ApiOperation("取消订单")
+    public Result<String> cancel(@PathVariable Long id) throws Exception {
+        log.info("取消订单：{}", id);
+        orderService.cancelById(id);
+        return Result.success();
+    }
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息

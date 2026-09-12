@@ -94,6 +94,36 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 取消当前用户的订单
+     *
+     * @param orderId 订单id
+     */
+    @Override
+    @Transactional
+    public void cancelById(Long orderId) throws Exception {
+        Long userId = BaseContext.getCurrentId();
+        Orders orders = orderMapper.getByIdAndUserId(orderId, userId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(orders.getStatus(), Orders.PENDING_PAYMENT)
+                && !Objects.equals(orders.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders cancelledOrder = Orders.builder()
+                .id(orderId)
+                .status(Orders.CANCELLED)
+                .cancelReason("用户取消")
+                .cancelTime(LocalDateTime.now())
+                .build();
+
+        refundIfPaid(orders, cancelledOrder);
+
+        orderMapper.update(cancelledOrder);
+    }
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息
@@ -250,6 +280,25 @@ public class OrderServiceImpl implements OrderService {
 
     private String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * 已付款订单执行退款，并设置更新对象的退款状态
+     */
+    private void refundIfPaid(Orders orders, Orders updateOrder) throws Exception {
+        if (!Objects.equals(orders.getPayStatus(), Orders.PAID)) {
+            return;
+        }
+
+        if (!paymentProperties.isMock()) {
+            weChatPayUtil.refund(
+                    orders.getNumber(),
+                    orders.getNumber(),
+                    orders.getAmount(),
+                    orders.getAmount()
+            );
+        }
+        updateOrder.setPayStatus(Orders.REFUND);
     }
 
     /**
