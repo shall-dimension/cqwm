@@ -6,6 +6,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersCancelDTO;
 import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersPageQueryDTO;
@@ -193,6 +194,38 @@ public class OrderServiceImpl implements OrderService {
         refundIfPaid(orders, rejectedOrder);
 
         orderMapper.update(rejectedOrder);
+    }
+
+    /**
+     * 管理端取消订单
+     *
+     * @param ordersCancelDTO 取消订单参数
+     */
+    @Override
+    @Transactional
+    public void cancel(OrdersCancelDTO ordersCancelDTO) throws Exception {
+        String cancelReason = ordersCancelDTO.getCancelReason();
+        if (cancelReason == null || cancelReason.trim().isEmpty()) {
+            throw new OrderBusinessException(MessageConstant.ORDER_CANCEL_REASON_REQUIRED);
+        }
+
+        Long orderId = ordersCancelDTO.getId();
+        Orders orders = orderMapper.getById(orderId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!isAdminCancelable(orders.getStatus())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders cancelledOrder = Orders.builder()
+                .id(orderId)
+                .status(Orders.CANCELLED)
+                .cancelReason(cancelReason.trim())
+                .cancelTime(LocalDateTime.now())
+                .build();
+        refundIfPaid(orders, cancelledOrder);
+        orderMapper.update(cancelledOrder);
     }
 
     /**
@@ -415,6 +448,16 @@ public class OrderServiceImpl implements OrderService {
 
     private String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * 判断管理端是否允许取消当前状态的订单
+     */
+    private boolean isAdminCancelable(Integer status) {
+        return Objects.equals(status, Orders.PENDING_PAYMENT)
+                || Objects.equals(status, Orders.CONFIRMED)
+                || Objects.equals(status, Orders.DELIVERY_IN_PROGRESS)
+                || Objects.equals(status, Orders.COMPLETED);
     }
 
     /**

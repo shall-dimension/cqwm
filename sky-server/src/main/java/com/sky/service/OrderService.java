@@ -3,6 +3,7 @@ package com.sky.service;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersConfirmDTO;
+import com.sky.dto.OrdersCancelDTO;
 import com.sky.dto.OrdersRejectionDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
@@ -65,6 +66,13 @@ public interface OrderService {
      * @param ordersRejectionDTO 拒单参数
      */
     void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception;
+
+    /**
+     * 管理端取消订单
+     *
+     * @param ordersCancelDTO 取消订单参数
+     */
+    void cancel(OrdersCancelDTO ordersCancelDTO) throws Exception;
 
     /**
      * 取消当前用户的订单
