@@ -42,6 +42,16 @@ public interface OrderMapper {
     Orders getByIdAndUserId(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
     /**
+     * 根据订单id查询订单及下单用户名称
+     *
+     * @param orderId 订单id
+     * @return 订单信息
+     */
+    @Select("select o.*, u.name as user_name from orders o " +
+            "left join user u on o.user_id = u.id where o.id = #{orderId}")
+    Orders getById(Long orderId);
+
+    /**
      * 插入订单
      *
      * @param orders 订单信息

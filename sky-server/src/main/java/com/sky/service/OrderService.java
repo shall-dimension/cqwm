@@ -43,6 +43,14 @@ public interface OrderService {
     OrderVO getOrderDetail(Long orderId);
 
     /**
+     * 管理端查询订单详情
+     *
+     * @param orderId 订单id
+     * @return 订单详情
+     */
+    OrderVO getOrderDetailForAdmin(Long orderId);
+
+    /**
      * 取消当前用户的订单
      *
      * @param orderId 订单id

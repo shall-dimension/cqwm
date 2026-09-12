@@ -120,6 +120,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 管理端查询订单详情
+     *
+     * @param orderId 订单id
+     * @return 订单详情
+     */
+    @Override
+    public OrderVO getOrderDetailForAdmin(Long orderId) {
+        Orders orders = orderMapper.getById(orderId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        return buildOrderVO(orders);
+    }
+
+    /**
      * 取消当前用户的订单
      *
      * @param orderId 订单id
