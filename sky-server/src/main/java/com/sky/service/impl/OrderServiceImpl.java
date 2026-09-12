@@ -25,6 +25,7 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,20 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
         return pageQuery(ordersPageQueryDTO);
+    }
+
+    /**
+     * 统计待接单、待派送和派送中的订单数量
+     *
+     * @return 各状态订单数量
+     */
+    @Override
+    public OrderStatisticsVO statistics() {
+        return orderMapper.statistics(
+                Orders.TO_BE_CONFIRMED,
+                Orders.CONFIRMED,
+                Orders.DELIVERY_IN_PROGRESS
+        );
     }
 
     /**

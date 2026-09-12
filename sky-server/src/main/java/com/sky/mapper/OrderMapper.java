@@ -3,6 +3,7 @@ package com.sky.mapper;
 import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderStatisticsVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -17,6 +18,18 @@ public interface OrderMapper {
      * @return 订单分页数据
      */
     Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 统计指定三种状态的订单数量
+     *
+     * @param toBeConfirmed 待接单状态
+     * @param confirmed 待派送状态
+     * @param deliveryInProgress 派送中状态
+     * @return 各状态订单数量
+     */
+    OrderStatisticsVO statistics(@Param("toBeConfirmed") Integer toBeConfirmed,
+                                 @Param("confirmed") Integer confirmed,
+                                 @Param("deliveryInProgress") Integer deliveryInProgress);
 
     /**
      * 根据订单id和用户id查询订单

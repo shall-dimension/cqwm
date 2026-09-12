@@ -30,6 +30,14 @@
         order by o.order_time desc, o.id desc
     </select>
 
+    <select id="statistics" resultType="com.sky.vo.OrderStatisticsVO">
+        select count(case when status = #{toBeConfirmed} then 1 end) as toBeConfirmed,
+               count(case when status = #{confirmed} then 1 end) as confirmed,
+               count(case when status = #{deliveryInProgress} then 1 end) as deliveryInProgress
+        from orders
+        where status in (#{toBeConfirmed}, #{confirmed}, #{deliveryInProgress})
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into orders
         (number, status, user_id, address_book_id, order_time, checkout_time, pay_method, pay_status, amount, remark,

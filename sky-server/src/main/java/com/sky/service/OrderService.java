@@ -5,6 +5,7 @@ import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 
@@ -25,6 +26,13 @@ public interface OrderService {
      * @return 订单分页结果
      */
     PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 统计待接单、待派送和派送中的订单数量
+     *
+     * @return 各状态订单数量
+     */
+    OrderStatisticsVO statistics();
 
     /**
      * 查询当前用户的订单详情
