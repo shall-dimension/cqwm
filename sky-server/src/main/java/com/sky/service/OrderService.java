@@ -1,11 +1,21 @@
 package com.sky.service;
 
 import com.sky.dto.OrdersPaymentDTO;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
 
 public interface OrderService {
+
+    /**
+     * 分页查询当前用户的历史订单
+     *
+     * @param ordersPageQueryDTO 分页及订单状态查询条件
+     * @return 历史订单分页结果
+     */
+    PageResult pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
 
     /**
      * 用户下单

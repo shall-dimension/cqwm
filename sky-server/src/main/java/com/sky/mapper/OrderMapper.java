@@ -1,11 +1,21 @@
 package com.sky.mapper;
 
+import com.github.pagehelper.Page;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface OrderMapper {
+
+    /**
+     * 根据条件分页查询订单
+     *
+     * @param ordersPageQueryDTO 查询条件
+     * @return 订单分页数据
+     */
+    Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
 
     /**
      * 插入订单

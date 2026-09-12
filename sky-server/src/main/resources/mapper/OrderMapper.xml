@@ -3,6 +3,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.sky.mapper.OrderMapper">
 
+    <select id="pageQuery" resultType="com.sky.entity.Orders">
+        select o.*, u.name as user_name
+        from orders o
+        left join user u on o.user_id = u.id
+        <where>
+            <if test="userId != null">
+                and o.user_id = #{userId}
+            </if>
+            <if test="status != null">
+                and o.status = #{status}
+            </if>
+        </where>
+        order by o.order_time desc, o.id desc
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into orders
         (number, status, user_id, address_book_id, order_time, checkout_time, pay_method, pay_status, amount, remark,

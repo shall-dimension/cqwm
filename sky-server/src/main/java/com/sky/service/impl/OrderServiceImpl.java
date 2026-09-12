@@ -2,9 +2,12 @@ package com.sky.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.OrdersPaymentDTO;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.AddressBook;
 import com.sky.entity.OrderDetail;
@@ -18,10 +21,12 @@ import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.properties.PaymentProperties;
+import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +56,25 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private PaymentProperties paymentProperties;
+
+    /**
+     * 分页查询当前用户的历史订单
+     *
+     * @param ordersPageQueryDTO 分页及订单状态查询条件
+     * @return 历史订单分页结果
+     */
+    @Override
+    public PageResult pageQuery(OrdersPageQueryDTO ordersPageQueryDTO) {
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+
+        List<OrderVO> records = new ArrayList<>();
+        for (Orders orders : page.getResult()) {
+            records.add(buildOrderVO(orders));
+        }
+
+        return new PageResult(page.getTotal(), records);
+    }
 
     /**
      * 用户下单
@@ -209,5 +233,34 @@ public class OrderServiceImpl implements OrderService {
 
     private String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * 将订单及其明细组装为订单视图对象
+     */
+    private OrderVO buildOrderVO(Orders orders) {
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders, orderVO);
+        orderVO.setOrderDetailList(orderDetailList);
+        orderVO.setOrderDishes(buildOrderDishes(orderDetailList));
+        return orderVO;
+    }
+
+    /**
+     * 将订单明细拼接为管理端列表展示文本
+     */
+    private String buildOrderDishes(List<OrderDetail> orderDetailList) {
+        StringBuilder orderDishes = new StringBuilder();
+        for (OrderDetail orderDetail : orderDetailList) {
+            if (orderDishes.length() > 0) {
+                orderDishes.append(";");
+            }
+            orderDishes.append(orderDetail.getName())
+                    .append("*")
+                    .append(orderDetail.getNumber());
+        }
+        return orderDishes.toString();
     }
 }
