@@ -93,6 +93,20 @@ public class OrderController {
     }
 
     /**
+     * 将原订单菜品重新加入购物车
+     *
+     * @param id 原订单id
+     * @return 操作结果
+     */
+    @PostMapping("/repetition/{id}")
+    @ApiOperation("再来一单")
+    public Result<String> repetition(@PathVariable Long id) {
+        log.info("再来一单：{}", id);
+        orderService.repetition(id);
+        return Result.success();
+    }
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息

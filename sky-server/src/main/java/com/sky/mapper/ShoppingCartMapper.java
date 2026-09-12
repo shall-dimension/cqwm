@@ -3,6 +3,7 @@ package com.sky.mapper;
 import com.sky.entity.ShoppingCart;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -38,6 +39,12 @@ public interface ShoppingCartMapper {
      * @param shoppingCart
      */
     void insert(ShoppingCart shoppingCart);
+
+    /**
+     * 批量插入购物车数据
+     * @param shoppingCartList 购物车数据
+     */
+    void insertBatch(@Param("shoppingCartList") List<ShoppingCart> shoppingCartList);
 
     /**
      * 根据用户id删除购物车数据

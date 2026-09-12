@@ -124,6 +124,39 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 将原订单菜品重新加入购物车
+     *
+     * @param orderId 原订单id
+     */
+    @Override
+    @Transactional
+    public void repetition(Long orderId) {
+        Long userId = BaseContext.getCurrentId();
+        Orders orders = orderMapper.getByIdAndUserId(orderId, userId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orderId);
+        if (orderDetailList == null || orderDetailList.isEmpty()) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        LocalDateTime createTime = LocalDateTime.now();
+        List<ShoppingCart> shoppingCartList = new ArrayList<>();
+        for (OrderDetail orderDetail : orderDetailList) {
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(orderDetail, shoppingCart, "id");
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(createTime);
+            shoppingCartList.add(shoppingCart);
+        }
+
+        shoppingCartMapper.deleteByUserId(userId);
+        shoppingCartMapper.insertBatch(shoppingCartList);
+    }
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息

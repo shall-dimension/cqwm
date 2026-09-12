@@ -34,6 +34,13 @@ public interface OrderService {
     void cancelById(Long orderId) throws Exception;
 
     /**
+     * 将原订单菜品重新加入购物车
+     *
+     * @param orderId 原订单id
+     */
+    void repetition(Long orderId);
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息
