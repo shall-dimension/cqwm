@@ -77,6 +77,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 查询当前用户的订单详情
+     *
+     * @param orderId 订单id
+     * @return 订单详情
+     */
+    @Override
+    public OrderVO getOrderDetail(Long orderId) {
+        Long userId = BaseContext.getCurrentId();
+        Orders orders = orderMapper.getByIdAndUserId(orderId, userId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        return buildOrderVO(orders);
+    }
+
+    /**
      * 用户下单
      *
      * @param ordersSubmitDTO 下单信息

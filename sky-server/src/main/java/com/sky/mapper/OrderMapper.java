@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
@@ -16,6 +17,16 @@ public interface OrderMapper {
      * @return 订单分页数据
      */
     Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 根据订单id和用户id查询订单
+     *
+     * @param orderId 订单id
+     * @param userId 用户id
+     * @return 订单信息
+     */
+    @Select("select * from orders where id = #{orderId} and user_id = #{userId}")
+    Orders getByIdAndUserId(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
     /**
      * 插入订单
