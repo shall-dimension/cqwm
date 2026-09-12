@@ -3,6 +3,7 @@ package com.sky.service;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersConfirmDTO;
+import com.sky.dto.OrdersRejectionDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
@@ -57,6 +58,13 @@ public interface OrderService {
      * @param ordersConfirmDTO 接单参数
      */
     void confirm(OrdersConfirmDTO ordersConfirmDTO);
+
+    /**
+     * 拒单
+     *
+     * @param ordersRejectionDTO 拒单参数
+     */
+    void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception;
 
     /**
      * 取消当前用户的订单

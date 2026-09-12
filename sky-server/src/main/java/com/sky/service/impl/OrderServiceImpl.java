@@ -9,6 +9,7 @@ import com.sky.context.BaseContext;
 import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.OrdersRejectionDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.AddressBook;
 import com.sky.entity.OrderDetail;
@@ -158,6 +159,40 @@ public class OrderServiceImpl implements OrderService {
                 .status(Orders.CONFIRMED)
                 .build();
         orderMapper.update(confirmedOrder);
+    }
+
+    /**
+     * 拒单
+     *
+     * @param ordersRejectionDTO 拒单参数
+     */
+    @Override
+    @Transactional
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception {
+        String rejectionReason = ordersRejectionDTO.getRejectionReason();
+        if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
+            throw new OrderBusinessException(MessageConstant.ORDER_REJECTION_REASON_REQUIRED);
+        }
+
+        Long orderId = ordersRejectionDTO.getId();
+        Orders orders = orderMapper.getById(orderId);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(orders.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders rejectedOrder = Orders.builder()
+                .id(orderId)
+                .status(Orders.CANCELLED)
+                .rejectionReason(rejectionReason.trim())
+                .cancelTime(LocalDateTime.now())
+                .build();
+
+        refundIfPaid(orders, rejectedOrder);
+
+        orderMapper.update(rejectedOrder);
     }
 
     /**
