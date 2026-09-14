@@ -28,6 +28,8 @@ public class MessageConstant {
     public static final String ORDER_REJECTION_REASON_REQUIRED = "拒单原因不能为空";
     public static final String ORDER_CANCEL_REASON_REQUIRED = "取消原因不能为空";
     public static final String REPORT_DATE_RANGE_ERROR = "开始日期不能晚于结束日期";
+    public static final String REPORT_EXPORT_FAILED = "运营数据报表导出失败";
+    public static final String REPORT_TEMPLATE_NOT_FOUND = "运营数据报表模板不存在";
     public static final String ALREADY_EXISTS = "用户名已存在";
 
 }

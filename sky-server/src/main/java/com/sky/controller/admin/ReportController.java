@@ -11,11 +11,15 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @RestController
@@ -89,5 +93,25 @@ public class ReportController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end) {
         log.info("销量排名Top10统计，开始日期：{}，结束日期：{}", begin, end);
         return Result.success(reportService.getSalesTop10(begin, end));
+    }
+
+    /**
+     * 导出最近30个完整自然日的运营数据报表
+     *
+     * @param response HTTP响应
+     */
+    @GetMapping("/export")
+    @ApiOperation("导出运营数据报表")
+    public void export(HttpServletResponse response) {
+        log.info("导出最近30天运营数据报表");
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
+                .filename("运营数据报表.xlsx", StandardCharsets.UTF_8)
+                .build();
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
+
+        reportService.exportBusinessData(response);
     }
 }
