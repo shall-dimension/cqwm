@@ -27,6 +27,7 @@ public class MessageConstant {
     public static final String ORDER_ALREADY_PAID = "该订单已支付";
     public static final String ORDER_REJECTION_REASON_REQUIRED = "拒单原因不能为空";
     public static final String ORDER_CANCEL_REASON_REQUIRED = "取消原因不能为空";
+    public static final String REPORT_DATE_RANGE_ERROR = "开始日期不能晚于结束日期";
     public static final String ALREADY_EXISTS = "用户名已存在";
 
 }

@@ -8,8 +8,10 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -97,4 +99,13 @@ public interface OrderMapper {
      */
     int updateStatusIfCurrent(@Param("orders") Orders orders,
                               @Param("expectedStatus") Integer expectedStatus);
+
+    /**
+     * 根据动态条件统计订单金额
+     *
+     * @param queryMap 查询条件
+     * @return 订单金额合计，无数据时为null
+     */
+    BigDecimal sumByMap(Map<String, Object> queryMap);
+
 }
