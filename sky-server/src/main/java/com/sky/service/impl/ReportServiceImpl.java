@@ -1,12 +1,15 @@
 package com.sky.service.impl;
 
 import com.sky.constant.MessageConstant;
+import com.sky.dto.DataOverViewQueryDTO;
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.exception.BaseException;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import org.apache.commons.lang.StringUtils;
@@ -20,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ReportServiceImpl implements ReportService {
@@ -147,6 +151,36 @@ public class ReportServiceImpl implements ReportService {
                 .totalOrderCount(totalOrderCount)
                 .validOrderCount(validOrderCount)
                 .orderCompletionRate(orderCompletionRate)
+                .build();
+    }
+
+    /**
+     * 查询指定日期范围内销量排名前十的商品
+     *
+     * @param begin 开始日期
+     * @param end 结束日期
+     * @return 销量排名统计数据
+     */
+    @Override
+    public SalesTop10ReportVO getSalesTop10(LocalDate begin, LocalDate end) {
+        validateDateRange(begin, end);
+
+        DataOverViewQueryDTO queryDTO = DataOverViewQueryDTO.builder()
+                .begin(begin.atStartOfDay())
+                .end(end.plusDays(1).atStartOfDay())
+                .build();
+        List<GoodsSalesDTO> goodsSalesList = orderMapper.getSalesTop10(queryDTO);
+
+        String nameList = goodsSalesList.stream()
+                .map(GoodsSalesDTO::getName)
+                .collect(Collectors.joining(","));
+        String numberList = goodsSalesList.stream()
+                .map(goodsSalesDTO -> String.valueOf(goodsSalesDTO.getNumber()))
+                .collect(Collectors.joining(","));
+
+        return SalesTop10ReportVO.builder()
+                .nameList(nameList)
+                .numberList(numberList)
                 .build();
     }
 

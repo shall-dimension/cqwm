@@ -1,6 +1,8 @@
 package com.sky.mapper;
 
 import com.github.pagehelper.Page;
+import com.sky.dto.DataOverViewQueryDTO;
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import com.sky.vo.OrderStatisticsVO;
@@ -116,4 +118,11 @@ public interface OrderMapper {
      */
     Integer countByMap(Map<String, Object> queryMap);
 
+    /**
+     * 查询指定时间范围内销量排名前十的商品
+     *
+     * @param queryDTO 查询时间范围
+     * @return 商品销量列表
+     */
+    List<GoodsSalesDTO> getSalesTop10(DataOverViewQueryDTO queryDTO);
 }
