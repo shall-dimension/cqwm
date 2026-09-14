@@ -3,6 +3,7 @@ package com.sky.controller.admin;
 import com.sky.result.Result;
 import com.sky.service.ReportService;
 import com.sky.vo.TurnoverReportVO;
+import com.sky.vo.UserReportVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -39,4 +40,21 @@ public class ReportController {
         log.info("营业额数据统计，开始日期：{}，结束日期：{}", begin, end);
         return Result.success(reportService.getTurnoverStatistics(begin, end));
     }
+
+    /**
+     * 查询指定日期范围内每天的新增用户和累计用户数量
+     *
+     * @param begin 开始日期
+     * @param end 结束日期
+     * @return 用户统计数据
+     */
+    @GetMapping("/userStatistics")
+    @ApiOperation("用户统计")
+    public Result<UserReportVO> userStatistics(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end) {
+        log.info("用户数据统计，开始日期：{}，结束日期：{}", begin, end);
+        return Result.success(reportService.getUserStatistics(begin, end));
+    }
+
 }
