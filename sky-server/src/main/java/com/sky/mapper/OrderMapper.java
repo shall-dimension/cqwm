@@ -108,4 +108,12 @@ public interface OrderMapper {
      */
     BigDecimal sumByMap(Map<String, Object> queryMap);
 
+    /**
+     * 根据动态条件统计订单数量
+     *
+     * @param queryMap 查询条件
+     * @return 订单数量
+     */
+    Integer countByMap(Map<String, Object> queryMap);
+
 }
